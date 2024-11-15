@@ -61,11 +61,20 @@ export async function PUT(
     }
 
     const decodedToken = await adminAuth.verifyIdToken(token);
-    if (decodedToken.uid !== data.userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    
+    // Check if the car exists and belongs to the user
+    const carDoc = await adminDb.collection('cars').doc(params.id).get();
+    
+    if (!carDoc.exists) {
+      return NextResponse.json({ error: "Car not found" }, { status: 404 });
     }
 
-    // Update car in database
+    const carData = carDoc.data();
+    if (carData?.userId !== decodedToken.uid) {
+      return NextResponse.json({ error: "Not authorized to edit this car" }, { status: 403 });
+    }
+
+    // Continue with update if authorized
     await adminDb.collection('cars').doc(params.id).update({
       title: data.title,
       description: data.description,
@@ -96,8 +105,20 @@ export async function DELETE(
     }
 
     const decodedToken = await adminAuth.verifyIdToken(token);
-    await adminDb.collection('cars').doc(params.id).delete();
+    
+    // Check if the car exists and belongs to the user
+    const carDoc = await adminDb.collection('cars').doc(params.id).get();
+    
+    if (!carDoc.exists) {
+      return NextResponse.json({ error: "Car not found" }, { status: 404 });
+    }
 
+    const carData = carDoc.data();
+    if (carData?.userId !== decodedToken.uid) {
+      return NextResponse.json({ error: "Not authorized to delete this car" }, { status: 403 });
+    }
+
+    await adminDb.collection('cars').doc(params.id).delete();
     return NextResponse.json({ message: "Car deleted successfully" });
   } catch (error) {
     console.error("Error deleting car:", error);

@@ -28,10 +28,19 @@ export function NavBar() {
   return (
     <nav className="border-b bg-background">
       <div className="container flex h-16 items-center px-4">
-        <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2">
+        <Link href="/dashboard" className="flex items-center gap-2">
           <Car className="h-6 w-6" />
           <span className="text-lg font-semibold">Car Manager</span>
         </Link>
+
+        <div className="flex items-center gap-4 ml-8">
+          <Link href="/dashboard">
+            <Button variant="ghost">All Cars</Button>
+          </Link>
+          <Link href="/dashboard/my-cars">
+            <Button variant="ghost">My Cars</Button>
+          </Link>
+        </div>
 
         <div className="ml-auto flex items-center gap-4">
           <Button

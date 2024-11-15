@@ -43,6 +43,18 @@ export default function EditCarPage({ params }: { params: { id: string } }) {
         });
         if (!response.ok) throw new Error("Failed to fetch car");
         const data = await response.json();
+        
+        // Check if current user is the owner
+        if (user?.uid !== data.userId) {
+          toast({
+            variant: "destructive",
+            title: "Unauthorized",
+            description: "You can only edit your own cars",
+          });
+          router.push("/dashboard");
+          return;
+        }
+        
         setCar(data);
         setTitle(data.title);
         setDescription(data.description);
@@ -62,7 +74,7 @@ export default function EditCarPage({ params }: { params: { id: string } }) {
     if (user) {
       fetchCar();
     }
-  }, [params.id, user, toast]);
+  }, [params.id, user, toast, router]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);

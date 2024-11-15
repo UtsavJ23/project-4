@@ -25,11 +25,11 @@ export default function DashboardPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const fetchCars = async () => {
+    const fetchAllCars = async () => {
       if (!user) return;
       try {
         const response = await fetch(
-          `/api/cars?userId=${user.uid}&search=${searchTerm}`,
+          `/api/cars?search=${searchTerm}`, // Removed userId filter
           {
             headers: {
               Authorization: `Bearer ${await user.getIdToken()}`,
@@ -50,7 +50,7 @@ export default function DashboardPage() {
       }
     };
 
-    fetchCars();
+    fetchAllCars();
   }, [user, searchTerm, toast]);
 
   if (loading) {
