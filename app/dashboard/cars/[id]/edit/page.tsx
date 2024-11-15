@@ -178,7 +178,7 @@ export default function EditCarPage({ params }: { params: { id: string } }) {
         title: "Success",
         description: "Car updated successfully",
       });
-      router.push(`/dashboard/cars/${params.id}`);
+      router.push("/dashboard");
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -273,7 +273,7 @@ export default function EditCarPage({ params }: { params: { id: string } }) {
             accept="image/*"
             multiple
             onChange={handleImageChange}
-            className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+            className="file:mr-4 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
           />
           {newImageUrls.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-4">
