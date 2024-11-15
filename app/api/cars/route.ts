@@ -1,11 +1,21 @@
 import { NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 
+interface Car {
+  id: string;
+  title: string;
+  description: string;
+  tags: string[];
+  images: string[];
+  userId: string;
+  createdAt: string;
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
-    const search = searchParams.get('search')?.toLowerCase() || '';
+    const searchTerm = searchParams.get('search')?.toLowerCase() || '';
     const token = request.headers.get("Authorization")?.split("Bearer ")[1];
 
     if (!token) {
@@ -13,31 +23,53 @@ export async function GET(request: Request) {
     }
 
     await adminAuth.verifyIdToken(token);
-    let query = adminDb.collection('cars');
 
-    // First get all cars for the user if userId is provided
-    if (userId) {
-      query = query.where('userId', '==', userId);
+    try {
+      // Basic query
+      let querySnapshot;
+      
+      if (userId) {
+        querySnapshot = await adminDb
+          .collection('cars')
+          .where('userId', '==', userId)
+          .get();
+      } else {
+        querySnapshot = await adminDb
+          .collection('cars')
+          .get();
+      }
+
+      if (querySnapshot.empty) {
+        return NextResponse.json([]);
+      }
+
+      // Map and filter results
+      const cars = querySnapshot.docs
+        .map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          title: doc.data().title || '',
+          description: doc.data().description || '',
+          tags: doc.data().tags || [],
+          images: doc.data().images || []
+        } as Car))
+        .filter(car => {
+          if (!searchTerm) return true;
+          return (
+            car.title.toLowerCase().includes(searchTerm) ||
+            car.description.toLowerCase().includes(searchTerm) ||
+            car.tags.some(tag => tag.toLowerCase().includes(searchTerm))
+          );
+        });
+
+      return NextResponse.json(cars);
+
+    } catch (dbError) {
+      console.error("Database error:", dbError);
+      throw dbError;
     }
-
-    const snapshot = await query.get();
-    let cars = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
-
-    // Then filter by search term on the client side for better search functionality
-    if (search) {
-      cars = cars.filter(car => 
-        car.title.toLowerCase().includes(search) || 
-        car.description.toLowerCase().includes(search) ||
-        car.tags.some((tag: string) => tag.toLowerCase().includes(search))
-      );
-    }
-
-    return NextResponse.json(cars);
   } catch (error) {
-    console.error("Error fetching cars:", error);
+    console.error("API error:", error);
     return NextResponse.json(
       { error: "Failed to fetch cars" },
       { status: 500 }

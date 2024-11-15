@@ -1,6 +1,16 @@
 import { NextResponse } from "next/server";
 import { adminAuth, adminDb } from "@/lib/firebase-admin";
 
+interface CarData {
+  id: string;
+  title: string;
+  description: string;
+  tags: string[];
+  images: string[];
+  userId: string;
+  createdAt: string;
+}
+
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
@@ -18,7 +28,17 @@ export async function GET(
       return NextResponse.json({ error: "Car not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ id: carDoc.id, ...carDoc.data() });
+    const data = carDoc.data() as CarData;
+    return NextResponse.json({
+      id: carDoc.id,
+      title: data.title || '',
+      description: data.description || '',
+      tags: Array.isArray(data.tags) ? data.tags : [],
+      images: Array.isArray(data.images) ? data.images : [],
+      userId: data.userId,
+      createdAt: data.createdAt
+    });
+
   } catch (error) {
     console.error("Error fetching car:", error);
     return NextResponse.json(
