@@ -11,6 +11,15 @@ import { useToast } from "@/components/ui/use-toast";
 import { storage } from "@/lib/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { ChevronLeft, X } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface Car {
   id: string;
@@ -202,6 +211,35 @@ export default function EditCarPage({ params }: { params: { id: string } }) {
     }
   };
 
+  const handleDelete = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/cars/${params.id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${await user.getIdToken()}`,
+        },
+      });
+
+      if (!response.ok) throw new Error("Failed to delete car");
+
+      toast({
+        title: "Success",
+        description: "Car deleted successfully",
+      });
+      router.push("/dashboard");
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -317,6 +355,30 @@ export default function EditCarPage({ params }: { params: { id: string } }) {
           >
             Cancel
           </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button type="button" variant="destructive">
+                Delete Car
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Delete Car</DialogTitle>
+                <DialogDescription>
+                  Are you sure you want to delete this car? This action cannot be undone.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button
+                  variant="destructive"
+                  onClick={handleDelete}
+                  disabled={loading}
+                >
+                  {loading ? "Deleting..." : "Delete"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
           <Button type="submit" disabled={loading}>
             {loading ? "Updating..." : "Update Car"}
           </Button>
